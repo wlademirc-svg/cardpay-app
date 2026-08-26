@@ -112,7 +112,7 @@ function TopBar(){
   const titulos = { abas:"Abas", relatorios:"Relatórios" };
   
   const subinfo = state.tab === "relatorios" 
-    ? `<div class="faturamento-tarja">Faturamento Total: ${formatMoney(state.totalFaturado)}</div>`
+    ? `<div class="faturamento-tarja" id="faturamento-header">Faturamento Total: ${formatMoney(state.totalFaturado)}</div>`
     : `<div class="topbar-sub">Gestão Geral · CardPay</div>`;
 
   bar.innerHTML = `
@@ -169,7 +169,7 @@ function AdminTabs(){
   return div;
 }
 
-// ---------- Painel de Relatórios Conectado à tabela 'card_transactions' ----------
+// ---------- Painel de Relatórios Dinâmico ----------
 function ReportsPanel(){
   const div = document.createElement("div");
   div.innerHTML = `
@@ -185,14 +185,21 @@ function ReportsPanel(){
       list.innerHTML = `<div class="empty">Nenhuma transação registrada no banco de dados.</div>`;
     } else {
       list.innerHTML = "";
+      
+      // Criamos uma variável temporária para somar os valores exatos calculados na tela
+      let somaCalculadaNaTela = 0;
+
       state.vendas.forEach((v, index) => {
-        // Busca o valor da transação aceitando as colunas comuns ('total', 'valor', 'amount' ou subitens)
+        // Tenta descobrir o preço por qualquer coluna numérica comum
         let totalDaVenda = 0;
         if (v.itens && Array.isArray(v.itens)) {
           totalDaVenda = v.itens.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qtd) || 0)), 0);
         } else {
-          totalDaVenda = Number(v.total || v.valor || v.amount || v.price || 0);
+          totalDaVenda = Number(v.total || v.valor || v.amount || v.price || v.price_paid || 0);
         }
+
+        // Acumula na soma geral
+        somaCalculadaNaTela += totalDaVenda;
 
         // Descrição do produto vendido
         let descricaoVenda = v.description || v.product_name || v.item_name || "";
@@ -211,38 +218,41 @@ function ReportsPanel(){
                 ${v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : 'Data recente'}
               </div>
             </div>
-            <span style="color:var(--green); font-weight:bold; font-size:15px;">+ ${formatMoney(totalDaVenda)}</span>
+            <span class="valor-item-lista" style="color:var(--green); font-weight:bold; font-size:15px;">+ ${formatMoney(totalDaVenda)}</span>
           </div>`;
       });
+
+      // Se a soma calculada na tela for maior que a calculada no estado inicial, atualiza o cabeçalho imediatamente!
+      if (somaCalculadaNaTela > 0 && state.totalFaturado === 0) {
+        state.totalFaturado = somaCalculadaNaTela;
+        const headerElement = document.getElementById("faturamento-header");
+        if (headerElement) {
+          headerElement.innerText = `Faturamento Total: ${formatMoney(somaCalculadaNaTela)}`;
+        }
+      }
     }
   }, 50);
   
   return div;
 }
 
-// ---------- Inicializador Conectando na tabela real 'card_transactions' ----------
+// ---------- Inicializador Seguro ----------
 async function init() {
   try { state.tabs = await sbGet("tabs", "select=*&order=name"); } catch(e) {}
   
-  // CONREÇÃO CHAVE: Puxa o histórico diretamente de 'card_transactions'
   try {
     state.vendas = await sbGet("card_transactions", "select=*&order=created_at.desc");
   } catch (e) {
-    console.error("Erro ao ler tabela card_transactions, tentando alternativa 'sales'", e);
-    try {
-      state.vendas = await sbGet("sales", "select=*&order=created_at.desc");
-    } catch(err) {
-      state.vendas = [];
-    }
+    state.vendas = [];
   }
   
-  // Realiza a soma do faturamento total baseado nas transações
+  // Cálculo matemático secundário por atributos da tabela
   state.totalFaturado = state.vendas.reduce((acc, v) => {
     let totalDaVenda = 0;
     if (v.itens && Array.isArray(v.itens)) {
       totalDaVenda = v.itens.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qtd) || 0)), 0);
     } else {
-      totalDaVenda = Number(v.total || v.valor || v.amount || v.price || 0);
+      totalDaVenda = Number(v.total || v.valor || v.amount || v.price || v.price_paid || 0);
     }
     return acc + totalDaVenda;
   }, 0);
