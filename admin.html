@@ -84,7 +84,7 @@ const headers = {
 
 // ---------- Estado do App ----------
 const state = {
-  tab: "relatorios", // Inicializa direto na aba que queremos ajustar
+  tab: "relatorios", 
   tabs: [],
   vendas: [],
   totalFaturado: 0
@@ -134,7 +134,6 @@ function TopBar(){
   const bar = document.createElement("div"); bar.className="topbar";
   const titulos = { abas:"Abas", produtos:"Produtos", vendedores:"Vendedores", cartoes:"Caixinha", relatorios:"Relatórios", config:"Config" };
   
-  // Condição para injetar o faturamento total em tempo real na tarja azul
   const subinfo = state.tab === "relatorios" 
     ? `<div class="faturamento-tarja">Faturamento Total: ${formatMoney(state.totalFaturado)}</div>`
     : `<div class="topbar-sub">Gestão Geral · CardPay</div>`;
@@ -154,7 +153,7 @@ function TopBar(){
 
 function Tabbar(){
   const bar = document.createElement("div"); bar.className="tabbar";
-  const items = [["abas","🏷️","Abas"], ["produtos","📦","Produtos"], ["vendedores","👤","Vendedores"], ["relatorios","📊","Relatórios"]];
+  const items = [["abas","🏷️","Abas"], ["relatorios","📊","Relatórios"]];
   items.forEach(([key,ic,label])=>{
     const b = document.createElement("button"); b.className = state.tab===key ? "active" : "";
     b.innerHTML = `<span class="ic">${ic}</span><span>${label}</span>`;
@@ -220,19 +219,20 @@ function ReportsPanel(){
   setTimeout(() => {
     const list = div.querySelector("#salesList");
     if(state.vendas.length === 0) {
-      list.innerHTML = `<div class="empty">Nenhuma venda realizada ainda.</div>`;
+      list.innerHTML = `<div class="empty">Nenhuma venda realizada ou erro ao conectar com a tabela do banco.</div>`;
     } else {
       list.innerHTML = "";
-      state.vendas.forEach(v => {
+      state.vendas.forEach((v, index) => {
+        const valorExibir = v.total || v.valor || 0;
         list.innerHTML += `
           <div class="list-item">
             <div>
-              <b>Venda #${v.id}</b>
+              <b>Venda #${v.id || index + 1}</b>
               <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">
-                ${new Date(v.created_at).toLocaleString('pt-BR')}
+                ${v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : 'Data não informada'}
               </div>
             </div>
-            <span style="color:var(--green); font-weight:bold;">+ ${formatMoney(v.total)}</span>
+            <span style="color:var(--green); font-weight:bold;">+ ${formatMoney(valorExibir)}</span>
           </div>`;
       });
     }
@@ -241,23 +241,30 @@ function ReportsPanel(){
   return div;
 }
 
-// ---------- Inicializador e Puxador de Dados ----------
+// ---------- Inicializador Inteligente (Evita erro de nome de tabela) ----------
 async function init() {
+  // 1. Tenta carregar as abas
+  try { state.tabs = await sbGet("tabs", "select=*&order=name"); } catch(e) {}
+  
+  // 2. Busca o histórico tentando primeiro "vendas" e depois "venda"
   try {
-    // 1. Busca abas
-    state.tabs = await sbGet("tabs", "select=*&order=name");
-    
-    // 2. Busca o histórico de vendas salvas no Supabase
     state.vendas = await sbGet("vendas", "select=*&order=created_at.desc");
-    
-    // 3. Executa a soma matemática de todos os produtos/totais vendidos
-    state.totalFaturado = state.vendas.reduce((acc, atual) => acc + (Number(atual.total) || 0), 0);
-    
-    render();
   } catch (e) {
-    console.error("Erro ao sincronizar dados com o Supabase", e);
-    render();
+    try {
+      state.vendas = await sbGet("venda", "select=*");
+    } catch (err) {
+      console.error("Nenhuma tabela de vendas encontrada no Supabase", err);
+      state.vendas = [];
+    }
   }
+  
+  // 3. Soma inteligente que aceita tanto a coluna .total quanto a coluna .valor
+  state.totalFaturado = state.vendas.reduce((acc, atual) => {
+    const preco = atual.total || atual.valor || 0;
+    return acc + (Number(preco) || 0);
+  }, 0);
+  
+  render();
 }
 
 // Executa o sistema
