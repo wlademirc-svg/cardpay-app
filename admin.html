@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>CardPay Admin</title>
+<meta name="theme-color" content="#0f4278">
+<style>
+  :root {
+    --bg: #f4f4f2; --card: #ffffff; --border: #e2e2df;
+    --text: #1a1a18; --text-secondary: #6b6b66; --text-muted: #9a9a94;
+    --accent: #185fa5; --accent-dark: #0f4278; --green: #0f6e56; --red: #a32d2d;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+  #app { min-height: 100vh; display: flex; flex-direction: column; }
+  button { cursor: pointer; font-family: inherit; }
+  input, select { font-family: inherit; }
+  .topbar { background: var(--accent-dark); color: #fff; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 20; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+  .brand-name { font-weight: 700; font-size: 19px; }
+  .topbar-sub { opacity: .65; font-size: 12px; margin-top: 2px; }
+  .btn-close-top { background: none; border: none; color: #fff; font-size: 22px; text-decoration: none; }
+  main { flex: 1; padding: 16px 16px 76px; max-width: 560px; width: 100%; margin: 0 auto; }
+  .card-panel { background: var(--card); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; border: 1px solid #ECECF3; }
+  .panel-title { font-size: 12px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; margin: 0 0 12px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 5px; }
+  .field input, .field select { width: 100%; padding: 11px 12px; border-radius: 11px; border: 1.5px solid #E4E5EF; font-size: 15px; background: #FCFCFD; color: var(--text); }
+  .btn { border: none; border-radius: 12px; padding: 13px 18px; font-weight: 600; font-size: 14.5px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-teal { background: var(--accent); color: #fff; }
+  .btn-outline { background: transparent; border: 1.5px solid #E4E5EF; color: var(--text); margin-bottom: 12px; }
+  .tabbar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #ECECF3; display: flex; justify-content: center; z-index: 20; padding-bottom: env(safe-area-inset-bottom); overflow-x: auto; }
+  .tabbar button { flex: 1; min-width: 68px; max-width: 90px; background: none; border: none; padding: 10px 2px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10.5px; color: var(--text-secondary); font-weight: 600; }
+  .tabbar button.active { color: var(--accent-dark); border-bottom: 3px solid var(--accent-dark); }
+  .tabbar .ic { font-size: 20px; }
+  .list-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #F0F0F5; gap: 10px; }
+  .list-item:last-child { border-bottom: none; }
+  .item-info h4 { margin: 0 0 3px; font-size: 15px; }
+  .item-info p { margin: 0; font-size: 12.5px; color: var(--text-secondary); }
+  .btn-del { background: none; border: 1px solid #E5C9C9; color: var(--red); padding: 6px 12px; border-radius: 20px; font-size: 12.5px; }
+  .checkbox-group { margin: 10px 0 16px; }
+  .checkbox-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .checkbox-item input { width: 18px; height: 18px; }
+  .empty { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 14px; }
+  .toast { position: fixed; top: 14px; left: 16px; right: 16px; max-width: 528px; margin: 0 auto; z-index: 100; padding: 13px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+  .toast-ok { background: #0F9D6A; color: #fff; }
+  .toast-err { background: var(--red); color: #fff; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+/* ===================== CONFIGURAÇÃO DE ESTADO VISUAL ===================== */
+const urlParams = new URLSearchParams(window.location.search);
+const tabInicial = urlParams.get("tab") || "relatorios";
+
+let state = {
+  tab: tabInicial, tabs: [], products: [], vendors: [], cards: [], sales: [], config: {taxa:"", nome_pix:"", pix1:"", pix2:""}, toast: null
+};
+
+function setState(patch){ state = {...state, ...patch}; render(); }
+function showToast(msg, type="ok"){ state.toast = {msg, type}; render(); setTimeout(()=>{ state.toast=null; render(); }, 2500); }
+
+/* ===================== CONEXÃO DIRETA HTTP COM SUPABASE ===================== */
+const SUPABASE_URL = "https://supabase.co"; 
+const SUPABASE_KEY = "sb_publishable_uF7dXCy27GG5-PnvVszpWw_hmgMjfK5"; 
+const SUPABASE_HEADERS = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
+
+async function loadAll(){
+  try {
+    const t = await fetch(SUPABASE_URL + "/rest/v1/tabs?select=*", { headers: SUPABASE_HEADERS }); state.tabs = await t.json() || [];
+    const p = await fetch(SUPABASE_URL + "/rest/v1/products?select=*", { headers: SUPABASE_HEADERS }); state.products = await p.json() || [];
+    const v = await fetch(SUPABASE_URL + "/rest/v1/vendors?select=*", { headers: SUPABASE_HEADERS }); state.vendors = await v.json() || [];
+    const c = await fetch(SUPABASE_URL + "/rest/v1/cards?select=*", { headers: SUPABASE_HEADERS }); state.cards = await c.json() || [];
+    const s = await fetch(SUPABASE_URL + "/rest/v1/sales?select=*&order=created_at.desc&limit=150", { headers: SUPABASE_HEADERS }); state.sales = await s.json() || [];
+    const cf = await fetch(SUPABASE_URL + "/rest/v1/config?id=eq.1", { headers: SUPABASE_HEADERS }); const cfData = await cf.json(); if(cfData && cfData.length > 0) state.config = cfData[0];
+    render();
+  } catch(err) { console.log("Sincronizando banco de dados..."); }
+}
+
+async function addItem(table, item) {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + table, { method: "POST", headers: SUPABASE_HEADERS, body: JSON.stringify([item]) });
+  if(r.ok) { showToast("Adicionado com sucesso!"); loadAll(); } else { showToast("Erro ao adicionar", "err"); }
+}
+
+async function deleteItem(table, id) {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?id=eq." + id, { method: "DELETE", headers: SUPABASE_HEADERS });
+  if(r.ok) { showToast("Removido!"); loadAll(); } else { showToast("Erro ao remover", "err"); }
+}
+
+/* ===================== SISTEMA DE MONTAGEM DE TELAS ===================== */
+function render(){
+  const app = document.getElementById("app"); if(!app) return; app.innerHTML = "";
+  
+  if(state.toast){
+    const t = document.createElement("div"); t.className = "toast " + (state.toast.type==="ok"?"toast-ok":"toast-err");
+    t.textContent = state.toast.msg; app.appendChild(t);
+  }
+  
+  app.appendChild(TopBar());
+  const main = document.createElement("main"); main.appendChild(Body());
+  app.appendChild(main); app.appendChild(Tabbar());
+}
+
+function TopBar(){
+  const bar = document.createElement("div"); bar.className="topbar";
+  const titulos = { abas:"Abas", produtos:"Produtos", vendedores:"Vendedores", cartoes:"Cartões", relatorios:"Relatórios", config:"Config" };
+  bar.innerHTML = `<div class="brand"><div class="brand-mark">CP</div><div><div class="brand-name">${titulos[state.tab] || "Admin"}</div><div class="topbar-sub">Gestão Geral · CardPay</div></div></div><a href="index.html" class="btn-close-top">✕</a>`;
+  return bar;
+}
+
+function Tabbar(){
+  const bar = document.createElement("div"); bar.className="tabbar";
+  const items = [["abas","🏷️","Abas"], ["produtos","📦","Produtos"], ["vendedores","👤","Vendedores"], ["cartoes","💰","Caixa"], ["relatorios","📊","Relatórios"], ["config","⚙️","Config"]];
+  items.forEach(([key,ic,label])=>{
+    const b = document.createElement("button"); b.className = state.tab===key ? "active" : "";
+    b.innerHTML = `<span class="ic">${ic}</span><span>${label}</span>`;
+    b.onclick = () => { state.tab = key; render(); }; bar.appendChild(b);
+  });
+  return bar;
+}
+
+function Body(){
+  const wrap = document.createElement("div");
+  if(state.tab==="abas") wrap.appendChild(AdminTabs());
+  if(state.tab==="produtos") wrap.appendChild(AdminProducts());
+  if(state.tab==="vendedores") wrap.appendChild(AdminVendors());
+  if(state.tab==="cartoes") wrap.appendChild(AdminCards());
+  if(state.tab==="relatorios") wrap.appendChild(ReportsPanel());
+  if(state.tab==="config") wrap.appendChild(ConfigPanel());
+  return wrap;
+}
+
+/* ===================== DETALHES DE CADA TELA ===================== */
+function AdminTabs(){
+  const div = document.createElement("div");
+  div.innerHTML = `<div class="card-panel"><p class="panel-title">Nova aba</p><div class="field"><input type="text" id="tabName" placeholder="Nome da aba"></div><button class="btn btn-teal" id="btnAddTab">Adicionar aba</button></div><div class="card-panel"><p class="panel-title">Abas Cadastradas (${state.tabs.length})</p><div id="tabsList"></div></div>`;
+  setTimeout(() => {
+    div.querySelector("#btnAddTab").onclick = () => { const nome = div.querySelector("#tabName").value; if(nome) addItem("tabs", { name: nome }); };
+    const list = div.querySelector("#tabsList"); if(state.tabs.length === 0) list.innerHTML = `<div class="empty">Nenhuma aba cadastrada.</div>`;
+    state.tabs.forEach(t => {
+      const row = document.createElement("div"); row.className = "list-item";
