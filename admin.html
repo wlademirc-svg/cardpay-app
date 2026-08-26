@@ -135,7 +135,7 @@ function TopBar(){
   const titulos = { abas:"Abas", produtos:"Produtos", vendedores:"Vendedores", cartoes:"Caixinha", relatorios:"Relatórios", config:"Config" };
   
   const subinfo = state.tab === "relatorios" 
-    ? `<div class="faturamento-tarja">Faturamento Total: ${formatMoney(state.totalFaturado)}</div>`
+    ? `<div class="faturamento-tarja" id="tarja-valor-total">Faturamento Total: ${formatMoney(state.totalFaturado)}</div>`
     : `<div class="topbar-sub">Gestão Geral · CardPay</div>`;
 
   bar.innerHTML = `
@@ -241,29 +241,27 @@ function ReportsPanel(){
   return div;
 }
 
-// ---------- Inicializador Inteligente (Evita erro de nome de tabela) ----------
+// ---------- Inicializador Inteligente ----------
 async function init() {
-  // 1. Tenta carregar as abas
   try { state.tabs = await sbGet("tabs", "select=*&order=name"); } catch(e) {}
   
-  // 2. Busca o histórico tentando primeiro "vendas" e depois "venda"
   try {
     state.vendas = await sbGet("vendas", "select=*&order=created_at.desc");
   } catch (e) {
     try {
       state.vendas = await sbGet("venda", "select=*");
     } catch (err) {
-      console.error("Nenhuma tabela de vendas encontrada no Supabase", err);
       state.vendas = [];
     }
   }
   
-  // 3. Soma inteligente que aceita tanto a coluna .total quanto a coluna .valor
+  // Soma os valores
   state.totalFaturado = state.vendas.reduce((acc, atual) => {
     const preco = atual.total || atual.valor || 0;
     return acc + (Number(preco) || 0);
   }, 0);
   
+  // CORREÇÃO: Força a interface inteira a atualizar assim que a soma termina!
   render();
 }
 
