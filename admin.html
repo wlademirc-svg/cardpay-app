@@ -169,7 +169,7 @@ function AdminTabs(){
   return div;
 }
 
-// ---------- Painel de Relatórios com Cálculo Interno de Produtos ----------
+// ---------- Painel de Relatórios Apontando para a tabela 'sales' ----------
 function ReportsPanel(){
   const div = document.createElement("div");
   div.innerHTML = `
@@ -182,19 +182,18 @@ function ReportsPanel(){
   setTimeout(() => {
     const list = div.querySelector("#salesList");
     if(state.vendas.length === 0) {
-      list.innerHTML = `<div class="empty">Nenhuma venda realizada ainda.</div>`;
+      list.innerHTML = `<div class="empty">Nenhuma transação gravada na tabela 'sales' ainda.</div>`;
     } else {
       list.innerHTML = "";
       state.vendas.forEach((v, index) => {
-        // CORREÇÃO: Calcula o total somando cada produto contido dentro da venda
+        // Calcula o total aceitando as variações de nomes de colunas da tabela 'sales'
         let totalDaVenda = 0;
         if (v.itens && Array.isArray(v.itens)) {
           totalDaVenda = v.itens.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qtd) || 0)), 0);
-        } else if (v.total || v.valor) {
-          totalDaVenda = Number(v.total || v.valor || 0);
+        } else {
+          totalDaVenda = Number(v.total || v.valor || v.amount || 0);
         }
 
-        // Gera a descrição dos itens vendidos para aparecer no histórico
         let resumoItens = "";
         if (v.itens && Array.isArray(v.itens)) {
           resumoItens = v.itens.map(i => `${i.qtd}x ${i.name}`).join(", ");
@@ -205,7 +204,7 @@ function ReportsPanel(){
             <div>
               <b>Venda #${v.id || index + 1}</b>
               <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
-                ${resumoItens || "Produtos variados"}
+                ${resumoItens || "Produtos processados"}
               </div>
               <div style="font-size:10px; color:var(--text-muted); margin-top:1px;">
                 ${v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : 'Data recente'}
@@ -220,27 +219,25 @@ function ReportsPanel(){
   return div;
 }
 
-// ---------- Inicializador com Processamento de Subitens ----------
+// ---------- Inicializador Conectando na tabela 'sales' ----------
 async function init() {
   try { state.tabs = await sbGet("tabs", "select=*&order=name"); } catch(e) {}
   
+  // CORREÇÃO DEFINITIVA: Busca os dados diretamente da tabela real 'sales'
   try {
-    state.vendas = await sbGet("vendas", "select=*&order=created_at.desc");
+    state.vendas = await sbGet("sales", "select=*&order=created_at.desc");
   } catch (e) {
-    try {
-      state.vendas = await sbGet("venda", "select=*");
-    } catch (err) {
-      state.vendas = [];
-    }
+    console.error("Erro ao ler tabela sales, tentando alternativa", e);
+    state.vendas = [];
   }
   
-  // CORREÇÃO: Soma o faturamento entrando dentro do array de produtos de cada venda
+  // Soma o faturamento com base nos dados da tabela 'sales'
   state.totalFaturado = state.vendas.reduce((acc, v) => {
     let totalDaVenda = 0;
     if (v.itens && Array.isArray(v.itens)) {
       totalDaVenda = v.itens.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qtd) || 0)), 0);
     } else {
-      totalDaVenda = Number(v.total || v.valor || 0);
+      totalDaVenda = Number(v.total || v.valor || v.amount || 0);
     }
     return acc + totalDaVenda;
   }, 0);
