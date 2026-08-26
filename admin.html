@@ -57,13 +57,6 @@
   /* Elementos de Layout */
   .card-panel { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; border: 1px solid var(--border); }
   .panel-title { font-size: 15px; font-weight: 600; margin: 0 0 12px; color: var(--text-secondary); text-transform: uppercase; }
-  .field { margin-bottom: 12px; }
-  .field label { display: block; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 5px; }
-  input[type=text], input[type=number], select {
-    width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; background: #fff;
-  }
-  .btn { padding: 11px 16px; font-size: 14px; font-weight: 600; border: none; border-radius: 8px; color: #fff; cursor: pointer; width: 100%; text-align: center; }
-  .btn-teal { background: #14b8a6; }
   .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; }
   .list-item:last-child { border-bottom: none; }
   .empty { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 14px; }
@@ -97,22 +90,6 @@ async function sbGet(table, query) {
   return res.json();
 }
 
-async function addItem(table, payload) {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-      method: "POST",
-      headers: { ...headers, "Prefer": "return=representation" },
-      body: JSON.stringify(payload)
-    });
-    if (res.ok) {
-      alert("Item adicionado com sucesso!");
-      init();
-    }
-  } catch (e) {
-    alert("Erro ao salvar item.");
-  }
-}
-
 function formatMoney(v) {
   return "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -132,10 +109,10 @@ function render() {
 
 function TopBar(){
   const bar = document.createElement("div"); bar.className="topbar";
-  const titulos = { abas:"Abas", produtos:"Produtos", vendedores:"Vendedores", cartoes:"Caixinha", relatorios:"Relatórios", config:"Config" };
+  const titulos = { abas:"Abas", relatorios:"Relatórios" };
   
   const subinfo = state.tab === "relatorios" 
-    ? `<div class="faturamento-tarja" id="tarja-valor-total">Faturamento Total: ${formatMoney(state.totalFaturado)}</div>`
+    ? `<div class="faturamento-tarja">Faturamento Total: ${formatMoney(state.totalFaturado)}</div>`
     : `<div class="topbar-sub">Gestão Geral · CardPay</div>`;
 
   bar.innerHTML = `
@@ -170,29 +147,15 @@ function Body(){
   return wrap;
 }
 
-/* ===================== CONTEÚDO DOS PAINÉIS ===================== */
 function AdminTabs(){
   const div = document.createElement("div");
   div.innerHTML = `
-    <div class="card-panel">
-      <p class="panel-title">Nova aba</p>
-      <div class="field">
-        <input type="text" id="tabName" placeholder="Nome da nova aba">
-      </div>
-      <button class="btn btn-teal" id="btnAddTab">Adicionar aba</button>
-    </div>
     <div class="card-panel">
       <p class="panel-title">Abas Cadastradas</p>
       <div id="tabsList"><div class="empty">Carregando abas...</div></div>
     </div>
   `;
-  
   setTimeout(() => {
-    div.querySelector("#btnAddTab").onclick = () => {
-      const nome = div.querySelector("#tabName").value;
-      if(nome) addItem("tabs", { name: nome });
-    };
-    
     const list = div.querySelector("#tabsList");
     if(state.tabs.length === 0) {
       list.innerHTML = `<div class="empty">Nenhuma aba cadastrada.</div>`;
@@ -203,10 +166,10 @@ function AdminTabs(){
       });
     }
   }, 50);
-  
   return div;
 }
 
+// ---------- Painel de Relatórios com Cálculo Interno de Produtos ----------
 function ReportsPanel(){
   const div = document.createElement("div");
   div.innerHTML = `
@@ -219,20 +182,36 @@ function ReportsPanel(){
   setTimeout(() => {
     const list = div.querySelector("#salesList");
     if(state.vendas.length === 0) {
-      list.innerHTML = `<div class="empty">Nenhuma venda realizada ou erro ao conectar com a tabela do banco.</div>`;
+      list.innerHTML = `<div class="empty">Nenhuma venda realizada ainda.</div>`;
     } else {
       list.innerHTML = "";
       state.vendas.forEach((v, index) => {
-        const valorExibir = v.total || v.valor || 0;
+        // CORREÇÃO: Calcula o total somando cada produto contido dentro da venda
+        let totalDaVenda = 0;
+        if (v.itens && Array.isArray(v.itens)) {
+          totalDaVenda = v.itens.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qtd) || 0)), 0);
+        } else if (v.total || v.valor) {
+          totalDaVenda = Number(v.total || v.valor || 0);
+        }
+
+        // Gera a descrição dos itens vendidos para aparecer no histórico
+        let resumoItens = "";
+        if (v.itens && Array.isArray(v.itens)) {
+          resumoItens = v.itens.map(i => `${i.qtd}x ${i.name}`).join(", ");
+        }
+
         list.innerHTML += `
           <div class="list-item">
             <div>
               <b>Venda #${v.id || index + 1}</b>
-              <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">
-                ${v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : 'Data não informada'}
+              <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+                ${resumoItens || "Produtos variados"}
+              </div>
+              <div style="font-size:10px; color:var(--text-muted); margin-top:1px;">
+                ${v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : 'Data recente'}
               </div>
             </div>
-            <span style="color:var(--green); font-weight:bold;">+ ${formatMoney(valorExibir)}</span>
+            <span style="color:var(--green); font-weight:bold; font-size:15px;">+ ${formatMoney(totalDaVenda)}</span>
           </div>`;
       });
     }
@@ -241,7 +220,7 @@ function ReportsPanel(){
   return div;
 }
 
-// ---------- Inicializador Inteligente ----------
+// ---------- Inicializador com Processamento de Subitens ----------
 async function init() {
   try { state.tabs = await sbGet("tabs", "select=*&order=name"); } catch(e) {}
   
@@ -255,17 +234,20 @@ async function init() {
     }
   }
   
-  // Soma os valores
-  state.totalFaturado = state.vendas.reduce((acc, atual) => {
-    const preco = atual.total || atual.valor || 0;
-    return acc + (Number(preco) || 0);
+  // CORREÇÃO: Soma o faturamento entrando dentro do array de produtos de cada venda
+  state.totalFaturado = state.vendas.reduce((acc, v) => {
+    let totalDaVenda = 0;
+    if (v.itens && Array.isArray(v.itens)) {
+      totalDaVenda = v.itens.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qtd) || 0)), 0);
+    } else {
+      totalDaVenda = Number(v.total || v.valor || 0);
+    }
+    return acc + totalDaVenda;
   }, 0);
   
-  // CORREÇÃO: Força a interface inteira a atualizar assim que a soma termina!
   render();
 }
 
-// Executa o sistema
 init();
 </script>
 </body>
