@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>CardPay</title>
+<meta name="theme-color" content="#0f4278">
+<style>
+  :root{
+    --bg:#f4f4f2; --card:#ffffff; --border:#e2e2df;
+    --text:#1a1a18; --text-secondary:#6b6b66; --text-muted:#9a9a94;
+    --accent:#185fa5; --accent-dark:#0f4278; --green:#0f6e56; --red:#a32d2d;
+    --radius:12px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,system-ui,sans-serif; -webkit-font-smoothing:antialiased;}
+  #app{min-height:100vh; display:flex; flex-direction:column;}
+  .topbar{background:var(--accent-dark); color:#fff; padding:22px 20px 26px; position:sticky; top:0;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:32px;height:32px;border-radius:8px;background:var(--accent); display:flex;align-items:center;justify-content:center; font-weight:700; font-size:13px; color:#fff;}
+  .brand-name{font-weight:700; font-size:20px; letter-spacing:-0.02em;}
+  .topbar-sub{opacity:.75; font-size:12.5px; margin-top:2px;}
+  main{flex:1; padding:20px 16px 40px; max-width:480px; width:100%; margin:0 auto;}
+  .role-card{display:flex; align-items:center; gap:16px; background:var(--card); border-radius:var(--radius); padding:22px; margin-bottom:14px; border:1px solid var(--border); cursor:pointer;}
+  .role-card:active{background:#F5F7FA;}
+  .role-card .emoji{width:52px;height:52px;border-radius:14px; display:flex;align-items:center;justify-content:center;font-size:24px; flex-shrink:0;}
+  .role-admin .emoji{background:#EAF1F8;}
+  .role-vendor .emoji{background:#E9F6F1;}
+  .role-caixa .emoji{background:#FDF2E3;}
+  .role-card h3{margin:0 0 3px; font-size:16.5px; color:var(--text);}
+  .role-card p{margin:0; font-size:13px; color:var(--text-secondary);}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><div class="brand-mark">CP</div><div><div class="brand-name">CardPay</div><div class="topbar-sub">Sistema de cartão de crédito interno</div></div></div>
+  </div>
+  <main>
+    <!-- Botões controlados por funções JS puras para evitar erros assíncronos de rotas -->
+    <div class="role-card role-admin" onclick="navegarPara('admin.html?tab=relatorios')">
+      <div class="emoji">🗂️</div>
+      <div><h3>Área Admin</h3><p>Abas, produtos, vendedores, cartões, relatórios</p></div>
+    </div>
+    
+    <div class="role-card role-vendor" onclick="navegarPara('vendedor.html')">
+      <div class="emoji">🛍️</div>
+      <div><h3>Área Vendedor</h3><p>Vender produtos e ler cartão</p></div>
+    </div>
+    
+    <div class="role-card role-caixa" onclick="navegarPara('admin.html?tab=cartoes')">
+      <div class="emoji">💰</div>
+      <div><h3>Área Caixa</h3><p>Ler cartão e adicionar crédito</p></div>
+    </div>
+  </main>
+</div>
+
+<script>
+function navegarPara(destino) {
+  // O cache-busting (?cb=...) garante o download de um arquivo 100% novo toda vez que clica
+  const separador = destino.includes('?') ? '&' : '?';
+  const urlFinal = destino + separador + 'cb=' + Date.now();
+  window.location.href = urlFinal;
+}
+</script>
+</body>
+</html>
