@@ -6,125 +6,53 @@
 <title>CardPay Admin</title>
 <meta name="theme-color" content="#0f4278">
 <style>
-  :root {
-    --bg: #f4f4f2;
-    --card: #ffffff;
-    --border: #e2e2df;
-    --text: #1a1a18;
-    --text-secondary: #6b6b66;
-    --accent: #185fa5;
-    --accent-dark: #0f4278;
-    --green: #0f6e56;
-    --red: #a32d2d;
-    --radius: 12px;
-  }
+  :root { --bg: #f4f4f2; --card: #ffffff; --border: #e2e2df; --text: #1a1a18; --text-secondary: #6b6b66; --accent: #185fa5; --accent-dark: #0f4278; --green: #0f6e56; --radius: 12px; }
   * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-  }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; background: var(--bg); color: var(--text); }
   #app { min-height: 100vh; display: flex; flex-direction: column; }
   main { flex: 1; padding: 16px 16px 70px; max-width: 560px; width: 100%; margin: 0 auto; }
-  
-  /* Tarja Azul Superior */
-  .topbar {
-    background: var(--accent-dark); color: #fff;
-    padding: 18px 20px; display: flex; justify-content: space-between; align-items: center;
-    position: sticky; top: 0; z-index: 20;
-  }
+  .topbar { background: var(--accent-dark); color: #fff; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 20; }
   .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+  .brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
   .brand-name { font-weight: 700; font-size: 19px; }
-  .topbar-sub { opacity: .65; font-size: 12px; margin-top: 2px; }
   .faturamento-tarja { font-size: 14px; font-weight: 600; background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 6px; margin-top: 3px; display: inline-block; color: #bbf7d0; }
-  .btn-close-top { background: none; border: none; color: #fff; font-size: 22px; text-decoration: none; cursor: pointer; }
-  
-  /* Menu Inferior (Tabbar) */
-  .tabbar {
-    position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
-    background: var(--card); border-top: 1px solid var(--border);
-    display: flex; justify-content: space-around; align-items: center; z-index: 10;
-  }
-  .tabbar button {
-    background: none; border: none; padding: 6px; color: var(--text-secondary);
-    display: flex; flex-direction: column; align-items: center; font-size: 11px; font-family: inherit; cursor: pointer; flex: 1;
-  }
+  .btn-close-top { background: none; border: none; color: #fff; font-size: 22px; text-decoration: none; }
+  .tabbar { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 10; }
+  .tabbar button { background: none; border: none; padding: 6px; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; font-size: 11px; cursor: pointer; flex: 1; }
   .tabbar button.active { color: var(--accent); font-weight: 600; }
   .tabbar button .ic { font-size: 20px; margin-bottom: 2px; }
-
-  /* Elementos de Layout */
   .card-panel { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; border: 1px solid var(--border); }
   .panel-title { font-size: 15px; font-weight: 600; margin: 0 0 12px; color: var(--text-secondary); text-transform: uppercase; }
   .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; }
   .list-item:last-child { border-bottom: none; }
-  .empty { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 14px; }
+  .empty { text-align: center; padding: 20px; color: var(--text-secondary); }
 </style>
 </head>
 <body>
-
 <div id="app"></div>
-
 <script>
 const SUPABASE_URL = "https://supabase.co";
 const SUPABASE_KEY = "sb_publishable_uF7dXCy27GG5-PnvVszpWw_hmgMjfK5";
-const headers = {
-  "apikey": SUPABASE_KEY,
-  "Authorization": "Bearer " + SUPABASE_KEY,
-  "Content-Type": "application/json"
-};
+const headers = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
 
-// ---------- Estado do App ----------
-const state = {
-  tab: "relatorios", 
-  tabs: [],
-  vendas: [],
-  totalFaturado: 0
-};
+const state = { tab: "relatorios", tabs: [], vendas: [], totalFaturado: 0 };
 
-// ---------- Conectores do Banco ----------
 async function sbGet(table, query) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers });
-  if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+function formatMoney(v) { return "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
-function formatMoney(v) {
-  return "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-// ---------- Renderização da Interface ----------
 function render() {
-  const app = document.getElementById("app");
-  app.innerHTML = "";
-  
-  const main = document.createElement("main");
-  main.appendChild(Body());
-  
-  app.appendChild(TopBar());
-  app.appendChild(main);
-  app.appendChild(Tabbar());
+  const app = document.getElementById("app"); app.innerHTML = "";
+  const main = document.createElement("main"); main.appendChild(Body());
+  app.appendChild(TopBar()); app.appendChild(main); app.appendChild(Tabbar());
 }
 
 function TopBar(){
   const bar = document.createElement("div"); bar.className="topbar";
-  const titulos = { abas:"Abas", relatorios:"Relatórios" };
-  
-  const subinfo = state.tab === "relatorios" 
-    ? `<div class="faturamento-tarja" id="faturamento-header">Faturamento Total: ${formatMoney(state.totalFaturado)}</div>`
-    : `<div class="topbar-sub">Gestão Geral · CardPay</div>`;
-
-  bar.innerHTML = `
-    <div class="brand">
-      <div class="brand-mark">CP</div>
-      <div>
-        <div class="brand-name">${titulos[state.tab] || "Admin"}</div>
-        ${subinfo}
-      </div>
-    </div>
-    <a href="index.html" class="btn-close-top">✕</a>
-  `;
+  const subinfo = state.tab === "relatorios" ? `<div class="faturamento-tarja" id="tarja-faturamento">Faturamento Total: ${formatMoney(state.totalFaturado)}</div>` : `<div style="font-size:12px; opacity:0.7;">Gestão Geral</div>`;
+  bar.innerHTML = `<div class="brand"><div class="brand-mark">CP</div><div><div class="brand-name">Admin</div>${subinfo}</div></div><a href="index.html" class="btn-close-top">✕</a>`;
   return bar;
 }
 
@@ -134,132 +62,55 @@ function Tabbar(){
   items.forEach(([key,ic,label])=>{
     const b = document.createElement("button"); b.className = state.tab===key ? "active" : "";
     b.innerHTML = `<span class="ic">${ic}</span><span>${label}</span>`;
-    b.onclick = () => { state.tab = key; render(); }; 
-    bar.appendChild(b);
+    b.onclick = () => { state.tab = key; render(); }; bar.appendChild(b);
   });
   return bar;
 }
 
 function Body(){
   const wrap = document.createElement("div");
-  if(state.tab==="abas") wrap.appendChild(AdminTabs());
-  if(state.tab==="relatorios") wrap.appendChild(ReportsPanel());
+  if(state.tab === "abas") wrap.appendChild(AdminTabs());
+  if(state.tab === "relatorios") wrap.appendChild(ReportsPanel());
   return wrap;
 }
 
 function AdminTabs(){
-  const div = document.createElement("div");
-  div.innerHTML = `
-    <div class="card-panel">
-      <p class="panel-title">Abas Cadastradas</p>
-      <div id="tabsList"><div class="empty">Carregando abas...</div></div>
-    </div>
-  `;
+  const div = document.createElement("div"); div.innerHTML = `<div class="card-panel"><p class="panel-title">Abas Cadastradas</p><div id="tabsList"></div></div>`;
   setTimeout(() => {
     const list = div.querySelector("#tabsList");
-    if(state.tabs.length === 0) {
-      list.innerHTML = `<div class="empty">Nenhuma aba cadastrada.</div>`;
-    } else {
-      list.innerHTML = "";
-      state.tabs.forEach(t => {
-        list.innerHTML += `<div class="list-item"><b>${t.name}</b><span>ID: ${t.id}</span></div>`;
-      });
-    }
-  }, 50);
+    if(state.tabs.length === 0) list.innerHTML = '<div class="empty">Nenhuma aba.</div>';
+    else state.tabs.forEach(t => { list.innerHTML += `<div class="list-item"><b>${t.name}</b></div>`; });
+  }, 30);
   return div;
 }
 
-// ---------- Painel de Relatórios Dinâmico ----------
 function ReportsPanel(){
-  const div = document.createElement("div");
-  div.innerHTML = `
-    <div class="card-panel">
-      <p class="panel-title">Histórico de Transações</p>
-      <div id="salesList"></div>
-    </div>
-  `;
-  
+  const div = document.createElement("div"); div.innerHTML = `<div class="card-panel"><p class="panel-title">Histórico de Transações</p><div id="salesList"></div></div>`;
   setTimeout(() => {
     const list = div.querySelector("#salesList");
-    if(state.vendas.length === 0) {
-      list.innerHTML = `<div class="empty">Nenhuma transação registrada no banco de dados.</div>`;
-    } else {
+    if(state.vendas.length === 0) { list.innerHTML = '<div class="empty">Nenhuma transação encontrada.</div>'; }
+    else {
       list.innerHTML = "";
-      
-      // Criamos uma variável temporária para somar os valores exatos calculados na tela
-      let somaCalculadaNaTela = 0;
-
-      state.vendas.forEach((v, index) => {
-        // Tenta descobrir o preço por qualquer coluna numérica comum
-        let totalDaVenda = 0;
-        if (v.itens && Array.isArray(v.itens)) {
-          totalDaVenda = v.itens.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qtd) || 0)), 0);
-        } else {
-          totalDaVenda = Number(v.total || v.valor || v.amount || v.price || v.price_paid || 0);
-        }
-
-        // Acumula na soma geral
-        somaCalculadaNaTela += totalDaVenda;
-
-        // Descrição do produto vendido
-        let descricaoVenda = v.description || v.product_name || v.item_name || "";
-        if (!descricaoVenda && v.itens && Array.isArray(v.itens)) {
-          descricaoVenda = v.itens.map(i => `${i.qtd}x ${i.name}`).join(", ");
-        }
-
-        list.innerHTML += `
-          <div class="list-item">
-            <div>
-              <b>Transação #${v.id || index + 1}</b>
-              <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
-                ${descricaoVenda || "Item Registrado"}
-              </div>
-              <div style="font-size:10px; color:var(--text-muted); margin-top:1px;">
-                ${v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : 'Data recente'}
-              </div>
-            </div>
-            <span class="valor-item-lista" style="color:var(--green); font-weight:bold; font-size:15px;">+ ${formatMoney(totalDaVenda)}</span>
-          </div>`;
+      state.vendas.forEach((v, idx) => {
+        // CORREÇÃO ULTRA SEGURA: Lê qualquer coluna de preço disponível no seu Supabase
+        let preco = Number(v.total || v.valor || v.amount || v.price || 0);
+        let desc = v.description || v.product_name || `Venda #${v.id || idx+1}`;
+        list.innerHTML += `<div class="list-item"><div><b>${desc}</b><div style="font-size:11px; color:var(--text-secondary);">${v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : ''}</div></div><span style="color:var(--green); font-weight:bold;">+ ${formatMoney(preco)}</span></div>`;
       });
-
-      // Se a soma calculada na tela for maior que a calculada no estado inicial, atualiza o cabeçalho imediatamente!
-      if (somaCalculadaNaTela > 0 && state.totalFaturado === 0) {
-        state.totalFaturado = somaCalculadaNaTela;
-        const headerElement = document.getElementById("faturamento-header");
-        if (headerElement) {
-          headerElement.innerText = `Faturamento Total: ${formatMoney(somaCalculadaNaTela)}`;
-        }
-      }
     }
-  }, 50);
-  
+  }, 30);
   return div;
 }
 
-// ---------- Inicializador Seguro ----------
 async function init() {
-  try { state.tabs = await sbGet("tabs", "select=*&order=name"); } catch(e) {}
-  
-  try {
-    state.vendas = await sbGet("card_transactions", "select=*&order=created_at.desc");
-  } catch (e) {
-    state.vendas = [];
-  }
-  
-  // Cálculo matemático secundário por atributos da tabela
-  state.totalFaturado = state.vendas.reduce((acc, v) => {
-    let totalDaVenda = 0;
-    if (v.itens && Array.isArray(v.itens)) {
-      totalDaVenda = v.itens.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.qtd) || 0)), 0);
-    } else {
-      totalDaVenda = Number(v.total || v.valor || v.amount || v.price || v.price_paid || 0);
-    }
-    return acc + totalDaVenda;
-  }, 0);
-  
+  try { state.tabs = await sbGet("tabs", "select=*"); } catch(e) {}
+  try { 
+    state.vendas = await sbGet("card_transactions", "select=*&order=created_at.desc"); 
+    // Faz o cálculo acumulado de todas as linhas da planilha
+    state.totalFaturado = state.vendas.reduce((acc, v) => acc + Number(v.total || v.valor || v.amount || v.price || 0), 0);
+  } catch (e) { state.vendas = []; }
   render();
 }
-
 init();
 </script>
 </body>
