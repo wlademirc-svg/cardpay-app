@@ -38,8 +38,13 @@ const headers = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_
 const state = { tab: "relatorios", tabs: [], vendas: [], totalFaturado: 0 };
 
 async function sbGet(table, query) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers });
-  return res.json();
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers });
+    if (!res.ok) return [];
+    return res.json();
+  } catch (e) {
+    return [];
+  }
 }
 function formatMoney(v) { return "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
@@ -78,7 +83,7 @@ function AdminTabs(){
   const div = document.createElement("div"); div.innerHTML = `<div class="card-panel"><p class="panel-title">Abas Cadastradas</p><div id="tabsList"></div></div>`;
   setTimeout(() => {
     const list = div.querySelector("#tabsList");
-    if(state.tabs.length === 0) list.innerHTML = '<div class="empty">Nenhuma aba.</div>';
+    if(state.tabs.length === 0) list.innerHTML = '<div class="empty">Nenhuma aba cadastrada.</div>';
     else state.tabs.forEach(t => { list.innerHTML += `<div class="list-item"><b>${t.name}</b></div>`; });
   }, 30);
   return div;
@@ -88,11 +93,11 @@ function ReportsPanel(){
   const div = document.createElement("div"); div.innerHTML = `<div class="card-panel"><p class="panel-title">Histórico de Transações</p><div id="salesList"></div></div>`;
   setTimeout(() => {
     const list = div.querySelector("#salesList");
-    if(state.vendas.length === 0) { list.innerHTML = '<div class="empty">Nenhuma transação encontrada.</div>'; }
-    else {
+    if(!state.vendas || state.vendas.length === 0) { 
+      list.innerHTML = '<div class="empty">Nenhuma transação encontrada no histórico.</div>'; 
+    } else {
       list.innerHTML = "";
       state.vendas.forEach((v, idx) => {
-        // CORREÇÃO ULTRA SEGURA: Lê qualquer coluna de preço disponível no seu Supabase
         let preco = Number(v.total || v.valor || v.amount || v.price || 0);
         let desc = v.description || v.product_name || `Venda #${v.id || idx+1}`;
         list.innerHTML += `<div class="list-item"><div><b>${desc}</b><div style="font-size:11px; color:var(--text-secondary);">${v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : ''}</div></div><span style="color:var(--green); font-weight:bold;">+ ${formatMoney(preco)}</span></div>`;
@@ -104,11 +109,20 @@ function ReportsPanel(){
 
 async function init() {
   try { state.tabs = await sbGet("tabs", "select=*"); } catch(e) {}
-  try { 
-    state.vendas = await sbGet("card_transactions", "select=*&order=created_at.desc"); 
-    // Faz o cálculo acumulado de todas as linhas da planilha
-    state.totalFaturado = state.vendas.reduce((acc, v) => acc + Number(v.total || v.valor || v.amount || v.price || 0), 0);
-  } catch (e) { state.vendas = []; }
+  
+  // Tenta buscar de 'card_transactions' primeiro
+  let dados = await sbGet("card_transactions", "select=*&order=created_at.desc");
+  
+  // Se vier vazio (por trava de RLS), busca da tabela aberta 'sales'
+  if (!dados || dados.length === 0) {
+    dados = await sbGet("sales", "select=*&order=created_at.desc");
+  }
+  
+  state.vendas = dados || [];
+  
+  // Realiza a soma de faturamento acumulado das linhas encontradas
+  state.totalFaturado = state.vendas.reduce((acc, v) => acc + Number(v.total || v.valor || v.amount || v.price || 0), 0);
+  
   render();
 }
 init();
