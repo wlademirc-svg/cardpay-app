@@ -35,7 +35,7 @@ const SUPABASE_URL = "https://supabase.co";
 const SUPABASE_KEY = "sb_publishable_uF7dXCy27GG5-PnvVszpWw_hmgMjfK5";
 const headers = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
 
-const state = { tab: "relatorios", tabs: [], itensProdutos: [], totalFaturado: 0 };
+const state = { tab: "relatorios", tabs: [], vendas: [], totalFaturado: 0 };
 
 async function sbGet(table, query) {
   try {
@@ -60,14 +60,15 @@ function TopBar(){
 }
 
 function Tabbar(){
-  const bar = document.createElement("div"); bar.className="tabbar";
+  const bar = document.createElement; bar.className="tabbar";
   const items = [["abas","🏷️","Abas"], ["relatorios","📊","Relatórios"]];
+  const div = document.createElement("div"); div.className="tabbar";
   items.forEach(([key,ic,label])=>{
     const b = document.createElement("button"); b.className = state.tab===key ? "active" : "";
     b.innerHTML = `<span class="ic">${ic}</span><span>${label}</span>`;
-    b.onclick = () => { state.tab = key; render(); }; bar.appendChild(b);
+    b.onclick = () => { state.tab = key; render(); }; div.appendChild(b);
   });
-  return bar;
+  return div;
 }
 
 function Body(){
@@ -88,19 +89,17 @@ function AdminTabs(){
 }
 
 function ReportsPanel(){
-  const div = document.createElement("div"); div.innerHTML = `<div class="card-panel"><p class="panel-title">Resumo por Produto</p><div id="salesList"></div></div>`;
+  const div = document.createElement("div"); div.innerHTML = `<div class="card-panel"><p class="panel-title">Relatório de Vendas</p><div id="salesList"></div></div>`;
   setTimeout(() => {
     const list = div.querySelector("#salesList");
-    if(!state.itensProdutos || state.itensProdutos.length === 0) { 
-      list.innerHTML = '<div class="empty">Nenhum produto cadastrado ou vendido encontrado.</div>'; 
+    if(!state.vendas || state.vendas.length === 0) { 
+      list.innerHTML = '<div class="empty">Nenhum registro de faturamento localizado nas tabelas do banco.</div>'; 
     } else {
       list.innerHTML = "";
-      state.itensProdutos.forEach((p, idx) => {
-        // Verifica o total faturado individual do produto (vendas acumuladas)
-        let valorVendido = Number(p.total_sales || p.faturamento || p.vendas_total || p.total || 0);
-        let estoqueInfo = p.sales_count || p.quantidade_vendida || p.qtd || 0;
-        
-        list.innerHTML += `<div class="list-item"><div><b>${p.name || 'Produto'}</b><div style="font-size:11px; color:var(--text-secondary);">Quantidade: ${estoqueInfo} itens vendidos</div></div><span style="color:var(--green); font-weight:bold;">${formatMoney(valorVendido)}</span></div>`;
+      state.vendas.forEach((v, idx) => {
+        let preco = Number(v.total || v.valor || v.amount || v.price || v.total_sales || v.faturamento || 0);
+        let desc = v.description || v.product_name || v.item_name || v.name || `Registro #${v.id || idx+1}`;
+        list.innerHTML += `<div class="list-item"><div><b>${desc}</b><div style="font-size:11px; color:var(--text-secondary);">${v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : 'Registro Salvo'}</div></div><span style="color:var(--green); font-weight:bold; font-size:15px;">+ ${formatMoney(preco)}</span></div>`;
       });
     }
   }, 30);
@@ -110,15 +109,34 @@ function ReportsPanel(){
 async function init() {
   try { state.tabs = await sbGet("tabs", "select=*"); } catch(e) {}
   
-  // Conecta diretamente na tabela 'products' que está liberada (UNRESTRICTED)
-  let dadosProdutos = await sbGet("products", "select=*");
-  state.itensProdutos = dadosProdutos || [];
+  // CONSULTA COMBINADA MULTI-TABELAS
+  let transacoes = await sbGet("card_transactions", "select=*");
+  let produtos = await sbGet("products", "select=*");
+  let vendasAlternativas = await sbGet("sales", "select=*");
   
-  // Realiza a soma de faturamento somando as colunas de faturamento acumulado por produto
-  state.totalFaturado = state.itensProdutos.reduce((acc, p) => {
-    let valorItem = Number(p.total_sales || p.faturamento || p.vendas_total || p.total || 0);
-    return acc + valorItem;
-  }, 0);
+  let listaFinal = [];
+  let somaFinal = 0;
+
+  // 1. Processa dados de card_transactions se existirem
+  if (transacoes && transacoes.length > 0) {
+    listaFinal = listaFinal.concat(transacoes);
+    transacoes.forEach(t => { somaFinal += Number(t.total || t.valor || t.amount || t.price || 0); });
+  }
+  
+  // 2. Processa dados de sales se existirem
+  if (vendasAlternativas && vendasAlternativas.length > 0) {
+    listaFinal = listaFinal.concat(vendasAlternativas);
+    vendasAlternativas.forEach(v => { somaFinal += Number(v.total || v.valor || v.amount || v.price || 0); });
+  }
+
+  // 3. Processa dados de produtos (faturamento acumulado) se as tabelas acima vierem zeradas
+  if (somaFinal === 0 && produtos && produtos.length > 0) {
+    listaFinal = produtos;
+    produtos.forEach(p => { somaFinal += Number(p.total_sales || p.faturamento || p.vendas_total || p.total || 0); });
+  }
+  
+  state.vendas = listaFinal;
+  state.totalFaturado = somaFinal;
   
   render();
 }
