@@ -47,9 +47,15 @@ async function sbGet(table, query) {
 function formatMoney(v) { return "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
 function render() {
-  const app = document.getElementById("app"); app.innerHTML = "";
-  const main = document.createElement("main"); main.appendChild(Body());
-  app.appendChild(TopBar()); app.appendChild(main); app.appendChild(Tabbar());
+  const app = document.getElementById("app"); 
+  app.innerHTML = "";
+  
+  const main = document.createElement("main"); 
+  main.appendChild(Body());
+  
+  app.appendChild(TopBar()); 
+  app.appendChild(main); 
+  app.appendChild(Tabbar());
 }
 
 function TopBar(){
@@ -60,15 +66,15 @@ function TopBar(){
 }
 
 function Tabbar(){
-  const bar = document.createElement; bar.className="tabbar";
+  const bar = document.createElement("div"); bar.className="tabbar";
   const items = [["abas","🏷️","Abas"], ["relatorios","📊","Relatórios"]];
-  const div = document.createElement("div"); div.className="tabbar";
   items.forEach(([key,ic,label])=>{
     const b = document.createElement("button"); b.className = state.tab===key ? "active" : "";
     b.innerHTML = `<span class="ic">${ic}</span><span>${label}</span>`;
-    b.onclick = () => { state.tab = key; render(); }; div.appendChild(b);
+    b.onclick = () => { state.tab = key; render(); }; 
+    bar.appendChild(b);
   });
-  return div;
+  return bar;
 }
 
 function Body(){
@@ -82,8 +88,11 @@ function AdminTabs(){
   const div = document.createElement("div"); div.innerHTML = `<div class="card-panel"><p class="panel-title">Abas Cadastradas</p><div id="tabsList"></div></div>`;
   setTimeout(() => {
     const list = div.querySelector("#tabsList");
-    if(state.tabs.length === 0) list.innerHTML = '<div class="empty">Nenhuma aba cadastrada.</div>';
-    else state.tabs.forEach(t => { list.innerHTML += `<div class="list-item"><b>${t.name}</b></div>`; });
+    if(!state.tabs || state.tabs.length === 0) list.innerHTML = '<div class="empty">Nenhuma aba cadastrada.</div>';
+    else {
+      list.innerHTML = "";
+      state.tabs.forEach(t => { list.innerHTML += `<div class="list-item"><b>${t.name}</b></div>`; });
+    }
   }, 30);
   return div;
 }
@@ -117,19 +126,16 @@ async function init() {
   let listaFinal = [];
   let somaFinal = 0;
 
-  // 1. Processa dados de card_transactions se existirem
   if (transacoes && transacoes.length > 0) {
     listaFinal = listaFinal.concat(transacoes);
     transacoes.forEach(t => { somaFinal += Number(t.total || t.valor || t.amount || t.price || 0); });
   }
   
-  // 2. Processa dados de sales se existirem
   if (vendasAlternativas && vendasAlternativas.length > 0) {
     listaFinal = listaFinal.concat(vendasAlternativas);
     vendasAlternativas.forEach(v => { somaFinal += Number(v.total || v.valor || v.amount || v.price || 0); });
   }
 
-  // 3. Processa dados de produtos (faturamento acumulado) se as tabelas acima vierem zeradas
   if (somaFinal === 0 && produtos && produtos.length > 0) {
     listaFinal = produtos;
     produtos.forEach(p => { somaFinal += Number(p.total_sales || p.faturamento || p.vendas_total || p.total || 0); });
