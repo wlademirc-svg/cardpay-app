@@ -2,151 +2,268 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CardPay Admin</title>
+<link rel="manifest" href="manifest-admin.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
 <meta name="theme-color" content="#0f4278">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CardPay Admin">
 <style>
-  :root { --bg: #f4f4f2; --card: #ffffff; --border: #e2e2df; --text: #1a1a18; --text-secondary: #6b6b66; --accent: #185fa5; --accent-dark: #0f4278; --green: #0f6e56; --radius: 12px; }
+  :root {
+    --bg: #f4f4f2;
+    --card: #ffffff;
+    --border: #e2e2df;
+    --text: #1a1a18;
+    --text-secondary: #6b6b66;
+    --accent: #185fa5;
+    --accent-dark: #0f4278;
+    --green: #0f6e56;
+    --red: #a32d2d;
+    --radius: 12px;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; background: var(--bg); color: var(--text); }
-  #app { min-height: 100vh; display: flex; flex-direction: column; }
-  main { flex: 1; padding: 16px 16px 70px; max-width: 560px; width: 100%; margin: 0 auto; }
-  .topbar { background: var(--accent-dark); color: #fff; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 20; }
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
-  .brand-name { font-weight: 700; font-size: 19px; }
-  .faturamento-tarja { font-size: 14px; font-weight: 600; background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 6px; margin-top: 3px; display: inline-block; color: #bbf7d0; }
-  .btn-close-top { background: none; border: none; color: #fff; font-size: 22px; text-decoration: none; }
-  .tabbar { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 10; }
-  .tabbar button { background: none; border: none; padding: 6px; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; font-size: 11px; cursor: pointer; flex: 1; }
-  .tabbar button.active { color: var(--accent); font-weight: 600; }
-  .tabbar button .ic { font-size: 20px; margin-bottom: 2px; }
-  .card-panel { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; border: 1px solid var(--border); }
-  .panel-title { font-size: 15px; font-weight: 600; margin: 0 0 12px; color: var(--text-secondary); text-transform: uppercase; }
-  .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 16px 16px 60px; min-height: 100vh; }
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px; margin: -16px -16px 16px;
+    background: var(--accent-dark); color: #fff;
+  }
+  .topbar .logo {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: #14b8a6; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+  }
+  .topbar h1 { font-size: 16px; margin: 0; }
+  .topbar .sub { font-size: 12px; opacity: 0.8; }
+  .topbar .back { margin-left: auto; background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  h2.section-title { font-size: 15px; margin: 0 0 10px; }
+  label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+  input[type=text], input[type=password], input[type=number] {
+    width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 12px; font-family: inherit;
+  }
+  select { width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; }
+  button {
+    padding: 11px 16px; font-size: 14px; font-weight: 600; border: none; border-radius: 8px;
+    background: var(--accent); color: #fff; cursor: pointer; width: 100%;
+  }
+  button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  button.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .list-item:last-child { border-bottom: none; }
-  .empty { text-align: center; padding: 20px; color: var(--text-secondary); }
+  .list-item .info b { font-size: 14px; }
+  .list-item .info p { font-size: 12px; color: var(--text-secondary); margin: 2px 0 0; }
+  .tabs-nav { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 4px; }
+  .tabs-nav button { width: auto; white-space: nowrap; background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  .tabs-nav button.active { background: var(--accent); color: #fff; }
+  .msg { padding: 10px 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
+  .msg.success { background: #d1fae5; color: var(--green); }
+  .msg.error { background: #fee2e2; color: var(--red); }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div class="wrap" id="wrap">
+  <div id="app"></div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://supabase.co";
 const SUPABASE_KEY = "sb_publishable_uF7dXCy27GG5-PnvVszpWw_hmgMjfK5";
-const headers = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
-
-const state = { tab: "relatorios", tabs: [], vendas: [], totalFaturado: 0 };
+const headers = {
+  "apikey": SUPABASE_KEY,
+  "Authorization": "Bearer " + SUPABASE_KEY,
+  "Content-Type": "application/json"
+};
 
 async function sbGet(table, query) {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers });
-    if (!res.ok) return [];
-    return res.json();
-  } catch (e) { return []; }
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
 }
-function formatMoney(v) { return "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-
-function render() {
-  const app = document.getElementById("app"); 
-  app.innerHTML = "";
-  
-  const main = document.createElement("main"); 
-  main.appendChild(Body());
-  
-  app.appendChild(TopBar()); 
-  app.appendChild(main); 
-  app.appendChild(Tabbar());
-}
-
-function TopBar(){
-  const bar = document.createElement("div"); bar.className="topbar";
-  const subinfo = state.tab === "relatorios" ? `<div class="faturamento-tarja" id="tarja-faturamento">Faturamento Total: ${formatMoney(state.totalFaturado)}</div>` : `<div style="font-size:12px; opacity:0.7;">Gestão Geral</div>`;
-  bar.innerHTML = `<div class="brand"><div class="brand-mark">CP</div><div><div class="brand-name">Admin</div>${subinfo}</div></div><a href="index.html" class="btn-close-top">✕</a>`;
-  return bar;
-}
-
-function Tabbar(){
-  const bar = document.createElement("div"); bar.className="tabbar";
-  const items = [["abas","🏷️","Abas"], ["relatorios","📊","Relatórios"]];
-  items.forEach(([key,ic,label])=>{
-    const b = document.createElement("button"); b.className = state.tab===key ? "active" : "";
-    b.innerHTML = `<span class="ic">${ic}</span><span>${label}</span>`;
-    b.onclick = () => { state.tab = key; render(); }; 
-    bar.appendChild(b);
+async function sbInsert(table, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: "POST", headers: { ...headers, "Prefer": "return=representation" },
+    body: JSON.stringify(body)
   });
-  return bar;
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+async function sbDelete(table, match) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${match}`, { method: "DELETE", headers });
+  if (!res.ok) throw new Error(await res.text());
 }
 
-function Body(){
-  const wrap = document.createElement("div");
-  if(state.tab === "abas") wrap.appendChild(AdminTabs());
-  if(state.tab === "relatorios") wrap.appendChild(ReportsPanel());
-  return wrap;
+function formatMoney(v) {
+  return "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function AdminTabs(){
-  const div = document.createElement("div"); div.innerHTML = `<div class="card-panel"><p class="panel-title">Abas Cadastradas</p><div id="tabsList"></div></div>`;
-  setTimeout(() => {
-    const list = div.querySelector("#tabsList");
-    if(!state.tabs || state.tabs.length === 0) list.innerHTML = '<div class="empty">Nenhuma aba cadastrada.</div>';
-    else {
-      list.innerHTML = "";
-      state.tabs.forEach(t => { list.innerHTML += `<div class="list-item"><b>${t.name}</b></div>`; });
-    }
-  }, 30);
-  return div;
-}
+const state = {
+  tela: "admin_login",
+  adminSecao: "abas",
+  abas: [],
+  produtos: [],
+  vendedores: [],
+  cards: [],
+  sales: [],
+  resumoProdutos: {},
+  appSettings: null,
+  configLiberado: false
+};
 
-function ReportsPanel(){
-  const div = document.createElement("div"); div.innerHTML = `<div class="card-panel"><p class="panel-title">Relatório de Vendas</p><div id="salesList"></div></div>`;
-  setTimeout(() => {
-    const list = div.querySelector("#salesList");
-    if(!state.vendas || state.vendas.length === 0) { 
-      list.innerHTML = '<div class="empty">Nenhum registro de faturamento localizado nas tabelas do banco.</div>'; 
-    } else {
-      list.innerHTML = "";
-      state.vendas.forEach((v, idx) => {
-        let preco = Number(v.total || v.valor || v.amount || v.price || v.total_sales || v.faturamento || 0);
-        let desc = v.description || v.product_name || v.item_name || v.name || `Registro #${v.id || idx+1}`;
-        list.innerHTML += `<div class="list-item"><div><b>${desc}</b><div style="font-size:11px; color:var(--text-secondary);">${v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : 'Registro Salvo'}</div></div><span style="color:var(--green); font-weight:bold; font-size:15px;">+ ${formatMoney(preco)}</span></div>`;
-      });
-    }
-  }, 30);
-  return div;
-}
+const app = document.getElementById("app");
 
-async function init() {
-  try { state.tabs = await sbGet("tabs", "select=*"); } catch(e) {}
-  
-  // CONSULTA COMBINADA MULTI-TABELAS
-  let transacoes = await sbGet("card_transactions", "select=*");
-  let produtos = await sbGet("products", "select=*");
-  let vendasAlternativas = await sbGet("sales", "select=*");
-  
-  let listaFinal = [];
-  let somaFinal = 0;
-
-  if (transacoes && transacoes.length > 0) {
-    listaFinal = listaFinal.concat(transacoes);
-    transacoes.forEach(t => { somaFinal += Number(t.total || t.valor || t.amount || t.price || 0); });
-  }
-  
-  if (vendasAlternativas && vendasAlternativas.length > 0) {
-    listaFinal = listaFinal.concat(vendasAlternativas);
-    vendasAlternativas.forEach(v => { somaFinal += Number(v.total || v.valor || v.amount || v.price || 0); });
-  }
-
-  if (somaFinal === 0 && produtos && produtos.length > 0) {
-    listaFinal = produtos;
-    produtos.forEach(p => { somaFinal += Number(p.total_sales || p.faturamento || p.vendas_total || p.total || 0); });
-  }
-  
-  state.vendas = listaFinal;
-  state.totalFaturado = somaFinal;
-  
+function ir(tela) {
+  state.tela = tela;
   render();
 }
-init();
-</script>
-</body>
-</html>
+
+function topbar(titulo, subtitulo, temVoltar, voltarPara) {
+  return `
+    <div class="topbar">
+      <div class="logo">CP</div>
+      <div>
+        <h1>${titulo}</h1>
+        ${subtitulo ? `<div class="sub">${subtitulo}</div>` : ""}
+      </div>
+      ${temVoltar ? `<button class="back" onclick="ir('${voltarPara}')">✕</button>` : ""}
+    </div>
+  `;
+}
+
+async function carregarDadosAdmin() {
+  try {
+    const [abas, produtos, vendedores, cards, sales, settings] = await Promise.all([
+      sbGet("tabs", "select=*&order=name"),
+      sbGet("products", "select=*&order=name"),
+      sbGet("vendedores", "select=*&order=name"),
+      sbGet("cards", "select=*&order=card_number"),
+      sbGet("sales", "select=*&order=created_at.desc"),
+      sbGet("app_settings", "select=*&limit=1")
+    ]);
+    state.abas = abas;
+    state.produtos = produtos;
+    state.vendedores = vendedores;
+    state.cards = cards;
+    state.sales = sales;
+    state.appSettings = settings[0] || null;
+
+    // Calcular resumo por produto
+    state.resumoProdutos = {};
+    state.produtos.forEach(p => {
+      state.resumoProdutos[p.id] = { name: p.name, qtd: 0, total: 0 };
+    });
+    state.sales.forEach(v => {
+      if (v.itens && Array.isArray(v.itens)) {
+        v.itens.forEach(item => {
+          if (state.resumoProdutos[item.id]) {
+            state.resumoProdutos[item.id].qtd += (item.qtd || 0);
+            state.resumoProdutos[item.id].total += ((item.price || 0) * (item.qtd || 0));
+          }
+        });
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function render() {
+  if (state.tela === "admin_login") renderAdminLogin();
+  else if (state.tela === "admin_painel") renderAdminPainel();
+}
+
+function renderAdminLogin() {
+  app.innerHTML = `
+    ${topbar("Painel Admin", "Autenticação", false)}
+    <div class="card">
+      <label>Senha de Acesso</label>
+      <input type="password" id="admin-senha" placeholder="Digite a senha admin">
+      <button id="btn-logar-admin">Acessar Painel</button>
+      <div id="admin-login-msg" style="margin-top:10px;"></div>
+    </div>
+  `;
+  document.getElementById("btn-logar-admin").onclick = async () => {
+    const senha = document.getElementById("admin-senha").value;
+    if (senha === "1234") {
+      await carregarDadosAdmin();
+      ir("admin_painel");
+    } else {
+      document.getElementById("admin-login-msg").innerHTML = `<p class="msg error">Senha incorreta.</p>`;
+    }
+  };
+}
+
+function renderAdminPainel() {
+  let secaoHtml = "";
+  if (state.adminSecao === "abas") {
+    secaoHtml = `
+      <div class="card">
+        <h2 class="section-title">Cadastrar Nova Aba</h2>
+        <input type="text" id="nova-aba-nome" placeholder="Nome da Aba (ex: Bebidas)">
+        <button id="btn-salvar-aba">Salvar Aba</button>
+      </div>
+      <div class="card">
+        <h2 class="section-title">Abas Ativas</h2>
+        <div id="lista-abas"></div>
+      </div>
+    `;
+  } else if (state.adminSecao === "produtos") {
+    secaoHtml = `
+      <div class="card">
+        <h2 class="section-title">Cadastrar Novo Produto</h2>
+        <label>Nome do Produto</label>
+        <input type="text" id="p-nome">
+        <label>Preço</label>
+        <input type="number" id="p-preco" step="0.01">
+        <label>Aba vinculada</label>
+        <select id="p-aba"></select>
+        <button id="btn-salvar-produto">Salvar Produto</button>
+      </div>
+      <div class="card">
+        <h2 class="section-title">Produtos Cadastrados</h2>
+        <div id="lista-produtos"></div>
+      </div>
+    `;
+  } else if (state.adminSecao === "vendedores") {
+    secaoHtml = `
+      <div class="card">
+        <h2 class="section-title">Cadastrar Vendedor</h2>
+        <input type="text" id="v-nome" placeholder="Nome do Vendedor">
+        <button id="btn-salvar-vendedor">Salvar Vendedor</button>
+      </div>
+      <div class="card">
+        <h2 class="section-title">Vendedores Ativos</h2>
+        <div id="lista-vendedores"></div>
+      </div>
+    `;
+  } else if (state.adminSecao === "relatorios") {
+    let totalGeralVendas = state.sales.reduce((acc, v) => {
+      if (v.itens && Array.isArray(v.itens)) {
+        return acc + v.itens.reduce((s, i) => s + ((i.price || 0) * (i.qtd || 0)), 0);
+      }
+      return acc + (v.total || v.valor || 0);
+    }, 0);
+
+    secaoHtml = `
+      <div class="card" style="background:var(--accent-dark); color:#fff; text-align:center; padding:20px;">
+        <div style="font-size:13px; opacity:0.8; text-transform:uppercase; font-weight:600;">Faturamento Geral Acumulado</div>
+        <div style="font-size:26px; font-weight:800; margin-top:4px; color:#bbf7d0;">${formatMoney(totalGeralVendas)}</div>
+      </div>
+      <div class="card">
+        <h2 class="section-title">Resumo por Produto</h2>
+        <div id="lista-resumo-produtos"></div>
+      </div>
+      <div class="card">
