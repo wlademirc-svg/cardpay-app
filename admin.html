@@ -2,139 +2,146 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>CardPay Admin</title>
-<link rel="manifest" href="manifest-admin.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
 <meta name="theme-color" content="#0f4278">
 <style>
-  :root { --bg: #f4f4f2; --card: #ffffff; --border: #e2e2df; --text: #1a1a18; --text-secondary: #6b6b66; --accent: #185fa5; --accent-dark: #0f4278; --green: #0f6e56; --red: #a32d2d; --radius: 12px; }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; background: var(--bg); color: var(--text); }
-  .wrap { max-width: 480px; margin: 0 auto; padding: 16px 16px 60px; min-height: 100vh; }
-  .topbar { display: flex; align-items: center; gap: 10px; padding: 14px 16px; margin: -16px -16px 16px; background: var(--accent-dark); color: #fff; }
-  .topbar .logo { width: 36px; height: 36px; border-radius: 8px; background: #14b8a6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
-  .topbar h1 { font-size: 16px; margin: 0; }
-  .topbar .sub { font-size: 12px; opacity: 0.8; }
-  .topbar .back { margin-left: auto; background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
-  h2.section-title { font-size: 15px; margin: 0 0 10px; }
-  label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
-  input[type=text], input[type=password], input[type=number] { width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; font-family: inherit; }
-  select { width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; }
-  button { padding: 11px 16px; font-size: 14px; font-weight: 600; border: none; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; width: 100%; }
-  button.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
-  .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  :root {
+    --bg: #f4f4f2; --card: #ffffff; --border: #e2e2df;
+    --text: #1a1a18; --text-secondary: #6b6b66; --text-muted: #9a9a94;
+    --accent: #185fa5; --accent-dark: #0f4278; --green: #0f6e56; --red: #a32d2d;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+  #app { min-height: 100vh; display: flex; flex-direction: column; }
+  button { cursor: pointer; font-family: inherit; }
+  input, select { font-family: inherit; }
+  .topbar { background: var(--accent-dark); color: #fff; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 20; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+  .brand-name { font-weight: 700; font-size: 19px; }
+  .topbar-sub { opacity: .65; font-size: 12px; margin-top: 2px; }
+  .btn-close-top { background: none; border: none; color: #fff; font-size: 22px; text-decoration: none; }
+  main { flex: 1; padding: 16px 16px 76px; max-width: 560px; width: 100%; margin: 0 auto; }
+  .card-panel { background: var(--card); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; border: 1px solid #ECECF3; }
+  .panel-title { font-size: 12px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; margin: 0 0 12px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 5px; }
+  .field input, .field select { width: 100%; padding: 11px 12px; border-radius: 11px; border: 1.5px solid #E4E5EF; font-size: 15px; background: #FCFCFD; color: var(--text); }
+  .btn { border: none; border-radius: 12px; padding: 13px 18px; font-weight: 600; font-size: 14.5px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-teal { background: var(--accent); color: #fff; }
+  .btn-outline { background: transparent; border: 1.5px solid #E4E5EF; color: var(--text); margin-bottom: 12px; }
+  .tabbar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #ECECF3; display: flex; justify-content: center; z-index: 20; padding-bottom: env(safe-area-inset-bottom); overflow-x: auto; }
+  .tabbar button { flex: 1; min-width: 68px; max-width: 90px; background: none; border: none; padding: 10px 2px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10.5px; color: var(--text-secondary); font-weight: 600; }
+  .tabbar button.active { color: var(--accent-dark); border-bottom: 3px solid var(--accent-dark); }
+  .tabbar .ic { font-size: 20px; }
+  .list-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #F0F0F5; gap: 10px; }
   .list-item:last-child { border-bottom: none; }
-  .list-item .info b { font-size: 14px; }
-  .list-item .info p { font-size: 12px; color: var(--text-secondary); margin: 2px 0 0; }
-  .tabs-nav { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 4px; }
-  .tabs-nav button { width: auto; white-space: nowrap; background: var(--card); color: var(--text); border: 1px solid var(--border); }
-  .tabs-nav button.active { background: var(--accent); color: #fff; }
-  .msg { padding: 10px 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
-  .msg.error { background: #fee2e2; color: var(--red); }
+  .item-info h4 { margin: 0 0 3px; font-size: 15px; }
+  .item-info p { margin: 0; font-size: 12.5px; color: var(--text-secondary); }
+  .btn-del { background: none; border: 1px solid #E5C9C9; color: var(--red); padding: 6px 12px; border-radius: 20px; font-size: 12.5px; }
+  .checkbox-group { margin: 10px 0 16px; }
+  .checkbox-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .checkbox-item input { width: 18px; height: 18px; }
+  .empty { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 14px; }
+  .toast { position: fixed; top: 14px; left: 16px; right: 16px; max-width: 528px; margin: 0 auto; z-index: 100; padding: 13px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+  .toast-ok { background: #0F9D6A; color: #fff; }
+  .toast-err { background: var(--red); color: #fff; }
 </style>
 </head>
 <body>
-<div class="wrap" id="wrap"><div id="app"></div></div>
+
+<div id="app"></div>
+
 <script>
-const SUPABASE_URL = "https://supabase.co";
-const SUPABASE_KEY = "sb_publishable_uF7dXCy27GG5-PnvVszpWw_hmgMjfK5";
-const headers = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
+/* ===================== CONFIGURAÇÃO DE ESTADO VISUAL ===================== */
+const urlParams = new URLSearchParams(window.location.search);
+const tabInicial = urlParams.get("tab") || "relatorios";
 
-async function sbGet(table, query) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers });
-  return res.json();
-}
-async function sbInsert(table, body) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: "POST", headers: { ...headers, "Prefer": "return=representation" }, body: JSON.stringify(body) });
-  return res.json();
-}
-function formatMoney(v) { return "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+let state = {
+  tab: tabInicial, tabs: [], products: [], vendors: [], cards: [], sales: [], config: {taxa:"", nome_pix:"", pix1:"", pix2:""}, toast: null
+};
 
-const state = { tela: "admin_login", adminSecao: "abas", abas: [], produtos: [], vendedores: [], sales: [], resumoProdutos: {} };
-const app = document.getElementById("app");
-function ir(tela) { state.tela = tela; render(); }
-function topbar(titulo, subtitulo) { return `<div class="topbar"><div class="logo">CP</div><div><h1>${titulo}</h1><div class="sub">${subtitulo}</div></div></div>`; }
-async function carregarDadosAdmin() {
+function setState(patch){ state = {...state, ...patch}; render(); }
+function showToast(msg, type="ok"){ state.toast = {msg, type}; render(); setTimeout(()=>{ state.toast=null; render(); }, 2500); }
+
+/* ===================== CONEXÃO DIRETA HTTP COM SUPABASE ===================== */
+const SUPABASE_URL = "https://supabase.co"; 
+const SUPABASE_KEY = "sb_publishable_uF7dXCy27GG5-PnvVszpWw_hmgMjfK5"; 
+const SUPABASE_HEADERS = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
+
+async function loadAll(){
   try {
-    const [abas, produtos, vendedores, sales] = await Promise.all([
-      sbGet("tabs", "select=*&order=name"),
-      sbGet("products", "select=*&order=name"),
-      sbGet("vendedores", "select=*&order=name"),
-      sbGet("sales", "select=*&order=created_at.desc")
-    ]);
-    state.abas = abas; state.produtos = produtos; state.vendedores = vendedores; state.sales = sales;
-    state.resumoProdutos = {};
-    state.produtos.forEach(p => { state.resumoProdutos[p.id] = { name: p.name, qtd: 0, total: 0 }; });
-    state.sales.forEach(v => {
-      if (v.itens && Array.isArray(v.itens)) {
-        v.itens.forEach(item => {
-          if (state.resumoProdutos[item.id]) {
-            state.resumoProdutos[item.id].qtd += (item.qtd || 0);
-            state.resumoProdutos[item.id].total += ((item.price || 0) * (item.qtd || 0));
-          }
-        });
-      }
-    });
-  } catch (e) { console.error(e); }
+    const t = await fetch(SUPABASE_URL + "/rest/v1/tabs?select=*", { headers: SUPABASE_HEADERS }); state.tabs = await t.json() || [];
+    const p = await fetch(SUPABASE_URL + "/rest/v1/products?select=*", { headers: SUPABASE_HEADERS }); state.products = await p.json() || [];
+    const v = await fetch(SUPABASE_URL + "/rest/v1/vendors?select=*", { headers: SUPABASE_HEADERS }); state.vendors = await v.json() || [];
+    const c = await fetch(SUPABASE_URL + "/rest/v1/cards?select=*", { headers: SUPABASE_HEADERS }); state.cards = await c.json() || [];
+    const s = await fetch(SUPABASE_URL + "/rest/v1/sales?select=*&order=created_at.desc&limit=150", { headers: SUPABASE_HEADERS }); state.sales = await s.json() || [];
+    const cf = await fetch(SUPABASE_URL + "/rest/v1/config?id=eq.1", { headers: SUPABASE_HEADERS }); const cfData = await cf.json(); if(cfData && cfData.length > 0) state.config = cfData[0];
+    render();
+  } catch(err) { console.log("Sincronizando banco de dados..."); }
 }
 
-function render() {
-  if (state.tela === "admin_login") renderAdminLogin();
-  else if (state.tela === "admin_painel") renderAdminPainel();
+async function addItem(table, item) {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + table, { method: "POST", headers: SUPABASE_HEADERS, body: JSON.stringify([item]) });
+  if(r.ok) { showToast("Adicionado com sucesso!"); loadAll(); } else { showToast("Erro ao adicionar", "err"); }
 }
 
-function renderAdminLogin() {
-  app.innerHTML = `${topbar("Painel Admin", "Autenticação")}<div class="card"><label>Senha de Acesso</label><input type="password" id="admin-senha" placeholder="Digite a senha admin"><button id="btn-logar-admin">Acessar Painel</button><div id="admin-login-msg"></div></div>`;
-  document.getElementById("btn-logar-admin").onclick = async () => {
-    if (document.getElementById("admin-senha").value === "1234") { await carregarDadosAdmin(); ir("admin_painel"); }
-    else { document.getElementById("admin-login-msg").innerHTML = '<p class="msg error">Senha incorreta.</p>'; }
-  };
+async function deleteItem(table, id) {
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?id=eq." + id, { method: "DELETE", headers: SUPABASE_HEADERS });
+  if(r.ok) { showToast("Removido!"); loadAll(); } else { showToast("Erro ao remover", "err"); }
 }
 
-function renderAdminPainel() {
-  let secaoHtml = "";
-  if (state.adminSecao === "abas") {
-    secaoHtml = `<div class="card"><h2 class="section-title">Cadastrar Nova Aba</h2><input type="text" id="nova-aba-nome" placeholder="Nome da Aba"><button id="btn-salvar-aba">Salvar Aba</button></div><div class="card"><h2 class="section-title">Abas Ativas</h2><div id="lista-abas"></div></div>`;
-  } else if (state.adminSecao === "produtos") {
-    secaoHtml = `<div class="card"><h2 class="section-title">Cadastrar Novo Produto</h2><label>Nome</label><input type="text" id="p-nome"><label>Preço</label><input type="number" id="p-preco" step="0.01"><label>Aba</label><select id="p-aba"></select><button id="btn-salvar-produto">Salvar Produto</button></div><div class="card"><h2 class="section-title">Produtos Cadastrados</h2><div id="lista-produtos"></div></div>`;
-  } else if (state.adminSecao === "relatorios") {
-    let totalGeralVendas = state.sales.reduce((acc, v) => acc + (Number(v.total || v.valor || 0)), 0);
-    secaoHtml = `<div class="card" style="background:var(--accent-dark); color:#fff; text-align:center; padding:20px;"><div style="font-size:13px; opacity:0.8; font-weight:600;">Faturamento Geral Acumulado</div><div style="font-size:26px; font-weight:800; margin-top:4px; color:#bbf7d0;">${formatMoney(totalGeralVendas)}</div></div><div class="card"><h2 class="section-title">Resumo por Produto</h2><div id="lista-resumo-produtos"></div></div>`;
+/* ===================== SISTEMA DE MONTAGEM DE TELAS ===================== */
+function render(){
+  const app = document.getElementById("app"); if(!app) return; app.innerHTML = "";
+  
+  if(state.toast){
+    const t = document.createElement("div"); t.className = "toast " + (state.toast.type==="ok"?"toast-ok":"toast-err");
+    t.textContent = state.toast.msg; app.appendChild(t);
   }
+  
+  app.appendChild(TopBar());
+  const main = document.createElement("main"); main.appendChild(Body());
+  app.appendChild(main); app.appendChild(Tabbar());
+}
 
-  app.innerHTML = `${topbar("Painel Admin", "Gerenciamento Geral")}<div class="tabs-nav"><button class="${state.adminSecao === 'abas' ? 'active' : ''}" data-sec="abas">Abas</button><button class="${state.adminSecao === 'produtos' ? 'active' : ''}" data-sec="produtos">Produtos</button><button class="${state.adminSecao === 'relatorios' ? 'active' : ''}" data-sec="relatorios">📊 Relatórios</button></div><div id="admin-conteudo">${secaoHtml}</div>`;
+function TopBar(){
+  const bar = document.createElement("div"); bar.className="topbar";
+  const titulos = { abas:"Abas", produtos:"Produtos", vendedores:"Vendedores", cartoes:"Cartões", relatorios:"Relatórios", config:"Config" };
+  bar.innerHTML = `<div class="brand"><div class="brand-mark">CP</div><div><div class="brand-name">${titulos[state.tab] || "Admin"}</div><div class="topbar-sub">Gestão Geral · CardPay</div></div></div><a href="index.html" class="btn-close-top">✕</a>`;
+  return bar;
+}
 
-  document.querySelectorAll(".tabs-nav button").forEach(btn => {
-    btn.onclick = () => { state.adminSecao = btn.getAttribute("data-sec"); renderAdminPainel(); };
+function Tabbar(){
+  const bar = document.createElement("div"); bar.className="tabbar";
+  const items = [["abas","🏷️","Abas"], ["produtos","📦","Produtos"], ["vendedores","👤","Vendedores"], ["cartoes","💰","Caixa"], ["relatorios","📊","Relatórios"], ["config","⚙️","Config"]];
+  items.forEach(([key,ic,label])=>{
+    const b = document.createElement("button"); b.className = state.tab===key ? "active" : "";
+    b.innerHTML = `<span class="ic">${ic}</span><span>${label}</span>`;
+    b.onclick = () => { state.tab = key; render(); }; bar.appendChild(b);
   });
-
-  if (state.adminSecao === "abas") {
-    const container = document.getElementById("lista-abas"); container.innerHTML = "";
-    state.abas.forEach(aba => { container.innerHTML += `<div class="list-item"><b>${aba.name}</b></div>`; });
-    document.getElementById("btn-salvar-aba").onclick = async () => {
-      const name = document.getElementById("nova-aba-nome").value; if (!name) return;
-      await sbInsert("tabs", { name }); await carregarDadosAdmin(); renderAdminPainel();
-    };
-  } else if (state.adminSecao === "produtos") {
-    const sel = document.getElementById("p-aba"); sel.innerHTML = "";
-    state.abas.forEach(a => sel.innerHTML += `<option value="${a.id}">${a.name}</option>`);
-    const container = document.getElementById("lista-produtos"); container.innerHTML = "";
-    state.produtos.forEach(p => { container.innerHTML += `<div class="list-item"><b>${p.name} - ${formatMoney(p.price)}</b></div>`; });
-    document.getElementById("btn-salvar-produto").onclick = async () => {
-      const name = document.getElementById("p-nome").value; const price = parseFloat(document.getElementById("p-preco").value); const tab_id = document.getElementById("p-aba").value;
-      if (!name || !price || !tab_id) return;
-      await sbInsert("products", { name, price, tab_id }); await carregarDadosAdmin(); renderAdminPainel();
-    };
-  } else if (state.adminSecao === "relatorios") {
-    const resContainer = document.getElementById("lista-resumo-produtos"); resContainer.innerHTML = "";
-    Object.values(state.resumoProdutos).forEach(rp => { if (rp.qtd > 0) { resContainer.innerHTML += `<div class="list-item"><b>${rp.name}</b><span>${rp.qtd} un. (${formatMoney(rp.total)})</span></div>`; } });
-    if (!resContainer.innerHTML) resContainer.innerHTML = '<p class="msg">Nenhum produto vendido ainda.</p>';
-  }
+  return bar;
 }
-ir("admin_login");
-</script>
-</body>
-</html>
+
+function Body(){
+  const wrap = document.createElement("div");
+  if(state.tab==="abas") wrap.appendChild(AdminTabs());
+  if(state.tab==="produtos") wrap.appendChild(AdminProducts());
+  if(state.tab==="vendedores") wrap.appendChild(AdminVendors());
+  if(state.tab==="cartoes") wrap.appendChild(AdminCards());
+  if(state.tab==="relatorios") wrap.appendChild(ReportsPanel());
+  if(state.tab==="config") wrap.appendChild(ConfigPanel());
+  return wrap;
+}
+
+/* ===================== DETALHES DE CADA TELA ===================== */
+function AdminTabs(){
+  const div = document.createElement("div");
+  div.innerHTML = `<div class="card-panel"><p class="panel-title">Nova aba</p><div class="field"><input type="text" id="tabName" placeholder="Nome da aba"></div><button class="btn btn-teal" id="btnAddTab">Adicionar aba</button></div><div class="card-panel"><p class="panel-title">Abas Cadastradas (${state.tabs.length})</p><div id="tabsList"></div></div>`;
+  setTimeout(() => {
+    div.querySelector("#btnAddTab").onclick = () => { const nome = div.querySelector("#tabName").value; if(nome) addItem("tabs", { name: nome }); };
+    const list = div.querySelector("#tabsList"); if(state.tabs.length === 0) list.innerHTML = `<div class="empty">Nenhuma aba cadastrada.</div>`;
+    state.tabs.forEach(t => {
+      const row = document.createElement("div"); row.className = "list-item";
